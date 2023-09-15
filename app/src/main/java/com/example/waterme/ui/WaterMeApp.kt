@@ -20,15 +20,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.typography
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +42,7 @@ import com.example.waterme.model.Plant
 import androidx.compose.ui.Modifier
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -75,31 +79,45 @@ fun PlantListContent(
     onScheduleReminder: (Reminder) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedPlant by rememberSaveable { mutableStateOf(plants[0]) }
-    var showReminderDialog by rememberSaveable { mutableStateOf(false) }
-    LazyColumn(
-        contentPadding = PaddingValues(dimensionResource(id = R.dimen.padding_medium)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
-        modifier = modifier
-    ) {
-        items(items = plants) {
-            PlantListItem(
-                plant = it,
-                onItemSelect = { plant ->
-                    selectedPlant = plant
-                    showReminderDialog = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
+    Scaffold {
+        var selectedPlant by rememberSaveable { mutableStateOf(plants[0]) }
+        var showReminderDialog by rememberSaveable { mutableStateOf(false) }
+        val layoutDirection = LocalLayoutDirection.current
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(dimensionResource(id = R.dimen.padding_medium)),
+            modifier = modifier
+                .statusBarsPadding()
+                .padding(
+                    start = dimensionResource(id = R.dimen.padding_medium),
+                    end = it.calculateEndPadding(layoutDirection)
+                            + dimensionResource(id = R.dimen.padding_medium)
+                ),
+            contentPadding = PaddingValues(
+                start = 0.dp,
+                top = dimensionResource(id = R.dimen.padding_medium),
+                end = 0.dp,
+                bottom = 0.dp
+            )
+        ) {
+            items(items = plants) {
+                PlantListItem(
+                    plant = it,
+                    onItemSelect = { plant ->
+                        selectedPlant = plant
+                        showReminderDialog = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+            }
+        }
+        if (showReminderDialog) {
+            ReminderDialogContent(
+                onDialogDismiss = { showReminderDialog = false },
+                plantName = stringResource(selectedPlant.name),
+                onScheduleReminder = onScheduleReminder
             )
         }
-    }
-    if (showReminderDialog) {
-        ReminderDialogContent(
-            onDialogDismiss = { showReminderDialog = false },
-            plantName = stringResource(selectedPlant.name),
-            onScheduleReminder = onScheduleReminder
-        )
     }
 }
 
